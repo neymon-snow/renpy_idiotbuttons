@@ -1,19 +1,19 @@
-# ШОК! КНОПКА С НОВЫМ ИВЕНТОМ ACTIVE!
+# ня кнопка няяя
 python early:
     import time
     import pygame
     class OButtonStyle():
         #класс-родитель
         def __init__(self, idle_transform=None, hover_transform=None, active_time=2.0, active_transform=None,
-                    s_idle_transform=None, s_hover_transform=None, s_active_transform=None, **kwargs):
+                    selected_idle_transform=None, selected_hover_transform=None, selected_active_transform=None, **kwargs):
 
             self.idle_transform = idle_transform
             self.active_time = active_time
             self.hover_transform = hover_transform
             self.active_transform = active_transform
-            self.s_idle_transform = s_idle_transform
-            self.s_hover_transform = s_hover_transform
-            self.s_active_transform = s_active_transform
+            self.selected_idle_transform = selected_idle_transform
+            self.selected_hover_transform = selected_hover_transform
+            self.selected_active_transform = selected_active_transform
 
 
     class OTextButtonStyle(OButtonStyle):
@@ -26,43 +26,43 @@ python early:
                 the style used by the text when the button is selected,
             hover_textstyle: str = None,
             active_textstyle: str = None,
-            s_idle_textstyle: str = None
-                s_ means thet the style is used when the button is already pressed,
-            s_hover_textstyle: str = None,
-            s_active_textstyle: str = None,
+            selected_idle_textstyle: str = None
+                selected_ means thet the style is used when the button is already pressed,
+            selected_hover_textstyle: str = None,
+            selected_active_textstyle: str = None,
             textpos: tuple(float, float) = (0,0)
                 the coordinates of the text relative to the upper left corner of the background, if present,
             idle_background: renpy.Displayable =None
                 button background in "normal" state,
-            hover_background=None, active_background=None, s_idle_background=None, s_hover_background=None, s_active_background=None,
+            hover_background=None, active_background=None, selected_idle_background=None, selected_hover_background=None, selected_active_background=None,
 
             idle_transform=None
                 a transform applied to the button in its "normal" state,
-            hover_transform=None, active_transform=None, s_idle_transform=None, s_hover_transform=None, s_active_transform=None
+            hover_transform=None, active_transform=None, selected_idle_transform=None, selected_hover_transform=None, selected_active_transform=None
         }
         """
         def __init__(self, base=None,
                     idle_textstyle="default", hover_textstyle=None, active_textstyle=None,
-                    s_idle_textstyle=None, s_hover_textstyle=None, s_active_textstyle=None,
+                    selected_idle_textstyle=None, selected_hover_textstyle=None, selected_active_textstyle=None,
                     textpos=(0,0),
                     idle_background=None, hover_background=None, active_background=None,
-                    s_idle_background=None, s_hover_background=None, s_active_background=None,
+                    selected_idle_background=None, selected_hover_background=None, selected_active_background=None,
                     **kwargs):
 
             self.idle_textstyle = idle_textstyle
             self.hover_textstyle = hover_textstyle
             self.active_textstyle = active_textstyle
-            self.s_idle_textstyle = s_idle_textstyle
-            self.s_hover_textstyle = s_hover_textstyle
-            self.s_active_textstyle = s_active_textstyle
+            self.selected_idle_textstyle = selected_idle_textstyle
+            self.selected_hover_textstyle = selected_hover_textstyle
+            self.selected_active_textstyle = selected_active_textstyle
 
             self.textpos = textpos
             self.idle_background = idle_background
             self.hover_background = hover_background
             self.active_background = active_background
-            self.s_idle_background = s_idle_background
-            self.s_hover_background = s_hover_background
-            self.s_active_background = s_active_background
+            self.selected_idle_background = selected_idle_background
+            self.selected_hover_background = selected_hover_background
+            self.selected_active_background = selected_active_background
 
             #добавить переходы.
             super().__init__(**kwargs)
@@ -72,15 +72,19 @@ python early:
             self.__dict__ = self.prefix_distribution()
 
         def return_tbarg(self, base): #позволяет наследовать другие стили
+            base = base.__dict__
             dictionary = self.__dict__
             new_dict = {}
-            if not isinstance(base, dict):
-                base = base.__dict__
+
             for name, value in dictionary.items():
                 if value == None:
                     new_dict[name] = base[name]
                 else:
                     new_dict[name] = value
+
+            if dictionary["idle_textstyle"] == "default":
+                new_dict["idle_textstyle"] = base["idle_textstyle"]
+
             return new_dict
 
 
@@ -93,12 +97,16 @@ python early:
                     prefix = strings[0]
                     name = strings[len(strings)-1]
 
-                    if prefix == "s":
+                    if prefix == "selected" and strings[1] != "idle":
+                        s_idle = self.__dict__[f"selected_idle_{name}"]
+                        if s_idle is not None:
+                            new_dict[prop] = s_idle
+                            continue
                         not_s = self.__dict__[f"{strings[1]}_{name}"]
                         if not_s is not None:
                             new_dict[prop] = not_s
                             continue
-
+                            
                     new_dict[prop] = self.__dict__["idle_"+name] #если и идл none, то ладно
 
             return new_dict
@@ -148,14 +156,11 @@ python early:
 
 
     def is_hover(mouse_pos, obj_pos, obj_size):
-        obj_pos = list(obj_pos) 
-        for index in range(len(obj_pos)):
-            if obj_pos[index-1] is None:
-                obj_pos[index-1] = 0
-        obj_pos = tuple(obj_pos)
+        #крайняя левая точка это obj pos.
+        #нужна крайняя правая нижняя точка для построения. это extr
         extr = (obj_pos[0]+obj_size[0], obj_pos[1]+obj_size[1])
 
-        if all(greater2(extr, mouse_pos)) and mouse_pos >= obj_pos:
+        if all(greater2(extr, mouse_pos)) and all(greater2(mouse_pos, obj_pos)):
             return True
         return False
 
@@ -254,7 +259,7 @@ python early:
                 click_time = self._persistent[1]
                 if time.time()-click_time <= self.a_style.active_time:
                     return
-                change_prefixes(self, "s_", 0)
+                change_prefixes(self, "selected_", 0)
 
             hover = is_hover((x,y), self.position, self.size)
             active = is_clicked(ev, hover)
@@ -315,9 +320,16 @@ python early:
 
 ########################################################################################
     def textbuttontext_return(a_text, style="default", a_style=OTextButtonStyle(), action=None, **kwargs):
+        
+        changed_style = OTextButtonStyle(base=a_style, **kwargs)
 
-        return TBDisplayable(a_text ,a_style, action, **kwargs)
+        return TBDisplayable(a_text ,changed_style, action, **kwargs)
+
+
+
+    renpy.register_sl_displayable("textbuttani", textbuttontext_return, "button_text").add_property_group("text").add_positional("a_text").add_property("a_style").add_property("textpos").add_property("active_time").add_property("action").add_style_property("transform").add_style_property("textstyle").add_style_property("background").add_property("active_textstyle").add_property("active_transform").add_property("active_background")
 
 
 
     renpy.register_sl_displayable("textbuttani", textbuttontext_return, "button_text").add_property_group("text").add_positional("a_text").add_property("a_style").add_property("action")
+
