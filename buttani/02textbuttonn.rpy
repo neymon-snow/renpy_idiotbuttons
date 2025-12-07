@@ -330,6 +330,3 @@ python early:
     renpy.register_sl_displayable("textbuttani", textbuttontext_return, "button_text").add_property_group("text").add_positional("a_text").add_property("a_style").add_property("textpos").add_property("active_time").add_property("action").add_style_property("transform").add_style_property("textstyle").add_style_property("background").add_property("active_textstyle").add_property("active_transform").add_property("active_background")
 
 
-
-    renpy.register_sl_displayable("textbuttani", textbuttontext_return, "button_text").add_property_group("text").add_positional("a_text").add_property("a_style").add_property("action")
-
