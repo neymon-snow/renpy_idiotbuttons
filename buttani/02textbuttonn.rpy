@@ -219,7 +219,6 @@ python early:
             prefixes = "".join(self._prefixes)
             style = self.a_style
             
-            canvas = renpy.Render(width, height)
             text_render = renpy.render(self.text_disp, width, height, st, at)
             text_size = text_render.get_size()
 
@@ -236,10 +235,11 @@ python early:
                 bg_size = bg_render.get_size()
                 bg_realpos = renpy.display.displayable.place(width, height, bg_size[0], bg_size[1], placement.__dict__.values())
 
-                canvas.blit(bg_render, bg_realpos)
-
                 #передаю данные о размере и крайней левой точке
                 self.size = get_rect(text_spos, text_size, bg_size=bg_size)
+
+                canvas = renpy.Render(*self.size)
+                canvas.blit(bg_render, bg_realpos)
 
                 xmin = min(text_realpos[0], bg_realpos[0])
                 ymin = min(text_realpos[1], bg_realpos[1])
@@ -247,6 +247,8 @@ python early:
 
             else:
                 self.size = get_rect(text_spos, text_size)
+                canvas = renpy.Render(*self.size)
+
                 self.position = text_realpos
 
             canvas.blit(text_render, text_realpos)
@@ -328,5 +330,3 @@ python early:
 
 
     renpy.register_sl_displayable("textbuttani", textbuttontext_return, "button_text").add_property_group("text").add_positional("a_text").add_property("a_style").add_property("textpos").add_property("active_time").add_property("action").add_style_property("transform").add_style_property("textstyle").add_style_property("background").add_property("active_textstyle").add_property("active_transform").add_property("active_background")
-
-
