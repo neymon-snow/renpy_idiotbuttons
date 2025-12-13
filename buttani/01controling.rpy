@@ -6,6 +6,8 @@ init:
     
 python early:
 
+
+
     class Stalker(renpy.Displayable):
         '''Удаляет состояние кнопки из списка, если она неактивна.
         (список нужен, тк каждое нажатие кнопки вызывает функцию restart interaction,
@@ -14,39 +16,32 @@ python early:
         def __init__(self):
             super().__init__(self)         
             self.alive_set = set()
-            self.verified = False
 
+            self.first_time = True
 
 
         def render(self, width, height, st, at):
             return renpy.Render(width, height)
 
 
+        def per_interact(self):
 
-        def event(self, ev, x, y, st):
-            if self.verified:
+            if self.first_time:
+                self.first_time = False
                 return
 
+            deadset = set()
 
-            delete_set = set()
-
+            # если кнопка не вызвала im_here за время всей предыдущей интеракции, т.е. за все время до того,
+            # как вызвалась restart_interaction или ui.interact (а только две эти функции начнут новую интеракцию), то кнопка не активна.
             for victim in persistent.victim_set:
-                if not (victim in self.alive_set):
-                    del persistent.buttons[victim]
-                    delete_set.add(victim)
-
-            persistent.victim_set = persistent.victim_set.difference(delete_set)
+                if not victim in self.alive_set:
+                    deadset.add(victim)
             
+            persistent.victim_set = persistent.victim_set.difference(deadset)
             self.alive_set = set()
-            self.verified = True
-
-            if persistent.victim_set == set():
-                renpy.hide("stalker")
 
 
-
-        def per_interact(self):
-            self.verified = False
 
         def im_here(self, tag):
             self.alive_set.add(tag)
