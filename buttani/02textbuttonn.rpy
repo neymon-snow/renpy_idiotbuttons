@@ -215,7 +215,6 @@ python early:
 
 
         def render(self, width, height, st, at):
-
             prefixes = "".join(self._prefixes)
             style = self.a_style
             
@@ -247,7 +246,7 @@ python early:
 
             else:
                 self.size = get_rect(text_spos, text_size)
-                canvas = renpy.Render(*self.size)
+                canvas = renpy.Render(**self.size)
 
                 self.position = text_realpos
 
@@ -255,13 +254,28 @@ python early:
             return canvas
             
 
-        def event(self, ev, x, y, st):
 
+        def event(self, ev, x, y, st):
+            #сообщаю сталкеру о том, что данный дисплейбл активен
+            stalker.im_here(self.tag)
+
+            #благодаря этому блоку ивент active может удерживаться active_time секунд
             if self._prefixes[1] == "active_":
                 click_time = self._persistent[1]
                 if time.time()-click_time <= self.a_style.active_time:
                     return
-                change_prefixes(self, "selected_", 0)
+
+
+            selected = self.action.get_selected() 
+            if selected: future_prefix = "selected_"
+            else: future_prefix = ""
+            prefix = self._prefixes[0]
+
+            #обновляю нулевой префикс. изменение selected не всегда связано именно с данным дисплейблом
+            if future_prefix != prefix:
+                change_prefixes(self, future_prefix, 0)
+                self._update_displayables()
+
 
             hover = is_hover((x,y), self.position, self.size)
             active = is_clicked(ev, hover)
@@ -294,11 +308,9 @@ python early:
             renpy.redraw(self, 0)
 
 
-        def per_interact(self):
-            stalker.im_here(self.tag)
-
 
         def _update_displayables(self):
+            #не могу инициализировать дисплейблы в render ивенте, тк это помешает трансформу (если есть)
 
             prefixes = "".join(self._prefixes)
             style = self.a_style
@@ -318,6 +330,15 @@ python early:
             self.bg_disp = None
             if transform:
                 self.text_disp = At(self.text_disp, transform)
+
+
+        def visit(self):
+            #не знаю как используется этот метод но он используется
+            return [self.text_disp, self.bg_disp]
+
+
+
+
 
 
 ########################################################################################
