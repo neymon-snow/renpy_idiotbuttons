@@ -246,7 +246,7 @@ python early:
 
             else:
                 self.size = get_rect(text_spos, text_size)
-                canvas = renpy.Render(**self.size)
+                canvas = renpy.Render(*self.size)
 
                 self.position = text_realpos
 
@@ -265,8 +265,11 @@ python early:
                 if time.time()-click_time <= self.a_style.active_time:
                     return
 
+            if isinstance(self.action, list):
+                selected = any(a.get_selected() for a in self.action)
+            else:
+                selected = self.action.get_selected() 
 
-            selected = self.action.get_selected() 
             if selected: future_prefix = "selected_"
             else: future_prefix = ""
             prefix = self._prefixes[0]
